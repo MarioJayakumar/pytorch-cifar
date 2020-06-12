@@ -86,11 +86,12 @@ parser.add_argument("--model", "-m", default="alexnet", type=str)
 parser.add_argument("--run", default=1, type=int)
 args = parser.parse_args()
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = 'cuda:3' if torch.cuda.is_available() else 'cpu'
 
 model_map = {}
 
 for run_num in range(5):
+    print(args.model, " running on number ", run_num)
     model_map["alexnet"] = AlexNet()
     model_map["fc1"] = FC1()
     model_map["fc2"]= FC2()
@@ -150,10 +151,9 @@ for run_num in range(5):
     #net = RegNetX_200MF()
     net = model_map[args.model]
     net = net.to(device)
-    if device == 'cuda':
+    if device == 'cuda:3':
         net = torch.nn.DataParallel(net)
         cudnn.benchmark = True
-
     if args.resume:
         # Load checkpoint.
         print('==> Resuming from checkpoint..')
@@ -174,7 +174,7 @@ for run_num in range(5):
     # Log Format:
     # Epoch, Train Loss, Train Acc, Test Loss, Test Acc
     ###
-    for epoch in range(start_epoch, start_epoch+10):
+    for epoch in range(start_epoch, start_epoch+400):
         train_loss, train_acc = train(epoch)
         test_loss, test_acc = test(epoch)
         log_line = str(epoch) + "," + str(train_loss) + "," + str(train_acc) + "," + str(test_loss) + "," + str(test_acc) + "\n"
