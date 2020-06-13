@@ -86,7 +86,7 @@ parser.add_argument("--model", "-m", default="alexnet", type=str)
 parser.add_argument("--run", default=1, type=int)
 args = parser.parse_args()
 
-device = 'cuda:3' if torch.cuda.is_available() else 'cpu'
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 model_map = {}
 
@@ -151,7 +151,7 @@ for run_num in range(5):
     #net = RegNetX_200MF()
     net = model_map[args.model]
     net = net.to(device)
-    if device == 'cuda:3':
+    if device == 'cuda':
         net = torch.nn.DataParallel(net)
         cudnn.benchmark = True
     if args.resume:
