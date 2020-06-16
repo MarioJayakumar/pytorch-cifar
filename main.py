@@ -90,94 +90,95 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 model_map = {}
 
-for run_num in range(5):
-    print(args.model, " running on number ", run_num)
-    model_map["alexnet"] = AlexNet()
-    model_map["fc1"] = FC1()
-    model_map["fc2"]= FC2()
-    model_map["GoogLeNet"] = GoogLeNet()
-    model_map["lenet"] = LeNet()
-    model_map["resnet34"] = ResNet34()
-    model_map["resnet50"] = ResNet50()
-    model_map["resnet101"] = ResNet101()
-    model_map["vgg11"] = VGG("VGG11")
-    model_map["vgg16"] = VGG("VGG16")
-    model_map["vgg19"] = VGG("VGG19")
-    best_acc = 0  # best test accuracy
-    start_epoch = 0  # start from epoch 0 or last checkpoint epoch
+run_num = args.run
 
-    # Data
-    print('==> Preparing data..')
-    transform_train = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-    ])
+print(args.model, " running on number ", run_num)
+model_map["alexnet"] = AlexNet()
+model_map["fc1"] = FC1()
+model_map["fc2"]= FC2()
+model_map["GoogLeNet"] = GoogLeNet()
+model_map["lenet"] = LeNet()
+model_map["resnet34"] = ResNet34()
+model_map["resnet50"] = ResNet50()
+model_map["resnet101"] = ResNet101()
+model_map["vgg11"] = VGG("VGG11")
+model_map["vgg16"] = VGG("VGG16")
+model_map["vgg19"] = VGG("VGG19")
+best_acc = 0  # best test accuracy
+start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
-    transform_test = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-    ])
+# Data
+print('==> Preparing data..')
+transform_train = transforms.Compose([
+    transforms.RandomCrop(32, padding=4),
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),
+    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+])
 
-    trainset = torchvision.datasets.CIFAR10(
-        root='./data', train=True, download=True, transform=transform_train)
-    trainloader = torch.utils.data.DataLoader(
-        trainset, batch_size=128, shuffle=True, num_workers=2)
+transform_test = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+])
 
-    testset = torchvision.datasets.CIFAR10(
-        root='./data', train=False, download=True, transform=transform_test)
-    testloader = torch.utils.data.DataLoader(
-        testset, batch_size=100, shuffle=False, num_workers=2)
+trainset = torchvision.datasets.CIFAR10(
+    root='./data', train=True, download=True, transform=transform_train)
+trainloader = torch.utils.data.DataLoader(
+    trainset, batch_size=128, shuffle=True, num_workers=2)
 
-    classes = ('plane', 'car', 'bird', 'cat', 'deer',
-            'dog', 'frog', 'horse', 'ship', 'truck')
+testset = torchvision.datasets.CIFAR10(
+    root='./data', train=False, download=True, transform=transform_test)
+testloader = torch.utils.data.DataLoader(
+    testset, batch_size=100, shuffle=False, num_workers=2)
 
-    # Model
-    print('==> Building model..')
-    # net = VGG('VGG19')
-    # net = ResNet18()
-    # net = PreActResNet18()
-    # net = GoogLeNet()
-    # net = DenseNet121()
-    # net = ResNeXt29_2x64d()
-    # net = MobileNet()
-    # net = MobileNetV2()
-    # net = DPN92()
-    # net = ShuffleNetG2()
-    # net = SENet18()
-    # net = ShuffleNetV2(1)
-    # net = EfficientNetB0()
-    #net = RegNetX_200MF()
-    net = model_map[args.model]
-    net = net.to(device)
-    if device == 'cuda':
-        net = torch.nn.DataParallel(net)
-        cudnn.benchmark = True
-    if args.resume:
-        # Load checkpoint.
-        print('==> Resuming from checkpoint..')
-        assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
-        checkpoint = torch.load('./checkpoint/ckpt.pth')
-        net.load_state_dict(checkpoint['net'])
-        best_acc = checkpoint['acc']
-        start_epoch = checkpoint['epoch']
+classes = ('plane', 'car', 'bird', 'cat', 'deer',
+        'dog', 'frog', 'horse', 'ship', 'truck')
 
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=args.lr,
-                        momentum=0, weight_decay=0)
+# Model
+print('==> Building model..')
+# net = VGG('VGG19')
+# net = ResNet18()
+# net = PreActResNet18()
+# net = GoogLeNet()
+# net = DenseNet121()
+# net = ResNeXt29_2x64d()
+# net = MobileNet()
+# net = MobileNetV2()
+# net = DPN92()
+# net = ShuffleNetG2()
+# net = SENet18()
+# net = ShuffleNetV2(1)
+# net = EfficientNetB0()
+#net = RegNetX_200MF()
+net = model_map[args.model]
+net = net.to(device)
+if device == 'cuda':
+    net = torch.nn.DataParallel(net)
+    cudnn.benchmark = True
+if args.resume:
+    # Load checkpoint.
+    print('==> Resuming from checkpoint..')
+    assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
+    checkpoint = torch.load('./checkpoint/ckpt.pth')
+    net.load_state_dict(checkpoint['net'])
+    best_acc = checkpoint['acc']
+    start_epoch = checkpoint['epoch']
 
-    log_name = "losses/" + args.model + "_" + str(run_num) + ".txt" 
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.SGD(net.parameters(), lr=args.lr,
+                    momentum=0, weight_decay=0)
 
-    log_file = open(log_name, "w")
-    ###
-    # Log Format:
-    # Epoch, Train Loss, Train Acc, Test Loss, Test Acc
-    ###
-    for epoch in range(start_epoch, start_epoch+400):
-        train_loss, train_acc = train(epoch)
-        test_loss, test_acc = test(epoch)
-        log_line = str(epoch) + "," + str(train_loss) + "," + str(train_acc) + "," + str(test_loss) + "," + str(test_acc) + "\n"
-        log_file.write(log_line) 
+log_name = "losses/" + args.model + "_" + str(run_num) + ".txt" 
 
-    log_file.close()
+log_file = open(log_name, "w")
+###
+# Log Format:
+# Epoch, Train Loss, Train Acc, Test Loss, Test Acc
+###
+for epoch in range(start_epoch, start_epoch+400):
+    train_loss, train_acc = train(epoch)
+    test_loss, test_acc = test(epoch)
+    log_line = str(epoch) + "," + str(train_loss) + "," + str(train_acc) + "," + str(test_loss) + "," + str(test_acc) + "\n"
+    log_file.write(log_line) 
+
+log_file.close()
