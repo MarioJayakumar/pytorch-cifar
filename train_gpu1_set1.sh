@@ -1,9 +1,9 @@
 
-CUDA_VISIBLE_DEVICES=1, python3 main.py --model lenet --run 0
+CUDA_VISIBLE_DEVICES=1, python3 main.py --model resnet34 --run 4
 
-CUDA_VISIBLE_DEVICES=1, python3 main.py --model lenet --run 1
+CUDA_VISIBLE_DEVICES=1, python3 main.py --model resnet50 --run 2
 
 
-CUDA_VISIBLE_DEVICES=1, python3 main.py --model lenet --run 2
+CUDA_VISIBLE_DEVICES=1, python3 main.py --model resnet50 --run 3
 
-CUDA_VISIBLE_DEVICES=1, python3 main.py --model lenet --run 3
+CUDA_VISIBLE_DEVICES=1, python3 main.py --model resnet50 --run 4
