@@ -13,15 +13,23 @@ import argparse
 
 from models import *
 from utils import progress_bar
+import analysis
 
+def get_current_lr(optimi):
+    for g in optimi.param_groups:
+        return g["lr"]
 # Training
-def train(epoch):
+# aswt_force_epochs is the number of epochs that must be performed when the LR is changed
+def train(epoch, test_acc_history, gamma=0.1, count=5, num_data=20, local_maxima=0, slack_prop=0.05, aswt_force_epochs=5):
     print('\nEpoch: %d' % epoch)
     net.train()
     train_loss = 0
     correct = 0
     total = 0
     reported_loss = 0
+    aswt_force_val = 0
+    aswt_start_epoch = min(num_data, count)
+    curr_lr = get_current_lr(optimizer)
     for batch_idx, (inputs, targets) in enumerate(trainloader):
         inputs, targets = inputs.to(device), targets.to(device)
         optimizer.zero_grad()
@@ -37,6 +45,19 @@ def train(epoch):
         reported_loss = train_loss/(batch_idx+1)
         progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
                      % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
+
+        # perform ASWT to reduce LR
+        if aswt_force_val == 0 and len(test_acc_history) > aswt_start_epoch:
+            # aswt test
+            aswt_stop = analysis.aswt_stopping(test_acc_history, gamma=gamma, count=count, num_data=num_data, local_maxima=local_maxima)
+            if aswt_stop:
+                curr_lr = curr_lr * 0.1
+                for g in optimizer.param_groups:
+                    g["lr"] = curr_lr
+                aswt_force_val = aswt_force_epochs
+                print("LR is now", curr_lr)
+        else:
+            aswt_force_val -= 1
     train_acc = correct/total
     return (reported_loss, train_acc)
 
@@ -91,7 +112,6 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 model_map = {}
 
 run_num = args.run
-
 print(args.model, " running on number ", run_num)
 model_map["alexnet"] = AlexNet()
 model_map["fc1"] = FC1()
@@ -175,9 +195,11 @@ log_file = open(log_name, "w")
 # Log Format:
 # Epoch, Train Loss, Train Acc, Test Loss, Test Acc
 ###
+test_acc_history = []
 for epoch in range(start_epoch, start_epoch+400):
-    train_loss, train_acc = train(epoch)
+    train_loss, train_acc = train(epoch, test_acc_history=test_acc_history)
     test_loss, test_acc = test(epoch)
+    test_acc_history.append(test_acc)
     log_line = str(epoch) + "," + str(train_loss) + "," + str(train_acc) + "," + str(test_loss) + "," + str(test_acc) + "\n"
     log_file.write(log_line) 
 
