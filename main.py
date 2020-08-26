@@ -91,6 +91,11 @@ parser.add_argument('--resume', '-r', action='store_true',
                     help='resume from checkpoint')
 parser.add_argument("--model", "-m", default="alexnet", type=str)
 parser.add_argument("--run", default=1, type=int)
+parser.add_argument("--gamma", default=0.5, type=float)
+parser.add_argument("--count", default=5, type=int)
+parser.add_argument("--num_data", default=18, type=int)
+parser.add_argument("--slack_prop", default=0.05, type=float)
+parser.add_argument("--local_max", default=0, type=int)
 args = parser.parse_args()
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -184,11 +189,11 @@ log_file = open(log_name, "w")
 test_acc_history = []
 aswt_force_val = 0
 curr_lr = get_current_lr(optimizer)
-gamma = 0.6
-count = 5
-num_data = 17
-local_maxima = 0
-slack_prop = 0.05
+gamma = args.gamma
+count = args.count
+num_data = args.num_data
+local_maxima = args.local_max
+slack_prop = args.slack_prop
 aswt_start_epoch = max(num_data, count)
 for epoch in range(start_epoch, start_epoch+400):
     train_loss, train_acc = train(epoch)

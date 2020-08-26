@@ -458,7 +458,7 @@ def denoise_test_acc(test_acc, local_maxima_range=1):
 if __name__ == "__main__":
 #    model_names = ["alexnet", "fc1", "fc2", "googlenet", "lenet", "resnet34", "resnet50", "resnet101", "vgg11", "vgg16", "vgg19"]
     gamma, fileheader, num_data, count, local_optima, slack_prop = parse_args()
-    print(get_aswt_stopping_point(model="resnet101", file_suffix=0, gamma=gamma, num_data=num_data, count=count, local_maxima=local_optima, slack_prop=slack_prop))
+    print(get_aswt_stopping_point(model="resnet34", file_suffix=0, gamma=gamma, num_data=num_data, count=count, local_maxima=local_optima, slack_prop=slack_prop))
   #  graph_file = open("optimized_hypers2.csv", "w")
    # graph_file.write("Model,Standard,AWST")
    # for model in model_names:
