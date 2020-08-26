@@ -42,8 +42,7 @@ def train(epoch):
         reported_loss = train_loss/(batch_idx+1)
         # progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
         #              % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
-        print("TrainLoss:", (train_loss/(batch_idx+1)))
-        print("TrainAcc:", (100.*correct/total))
+    print("TrainAcc:", (100.*correct/total))
 
     train_acc = correct/total
     return (reported_loss, train_acc)
@@ -69,8 +68,7 @@ def test(epoch):
             reported_loss = test_loss/(batch_idx+1)
             # progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
             #              % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
-            print("TestLoss:", (test_loss/(batch_idx+1)))
-            print("TestAcc:", 100.*correct/total)
+        print("TestAcc:", 100.*correct/total)
     # Save checkpoint.
     acc = 100.*correct/total
     if acc > best_acc:
@@ -82,7 +80,7 @@ def test(epoch):
         }
         if not os.path.isdir('checkpoint'):
             os.mkdir('checkpoint')
-        torch.save(state, './checkpoint/lrsched1_ckpt.pth')
+        torch.save(state, './checkpoint/lrsched2_ckpt.pth')
         best_acc = acc
     return (reported_loss, acc)
 
@@ -191,11 +189,12 @@ count = 5
 num_data = 17
 local_maxima = 0
 slack_prop = 0.05
-aswt_start_epoch = min(num_data, count)
+aswt_start_epoch = max(num_data, count)
 for epoch in range(start_epoch, start_epoch+400):
     train_loss, train_acc = train(epoch)
     test_loss, test_acc = test(epoch)
-    test_acc_history.append(test_acc)
+    test_acc_history.append(test_acc/100)
+    print(test_acc_history)
     # perform ASWT to reduce LR
     if aswt_force_val == 0 and epoch > aswt_start_epoch:
         # aswt test

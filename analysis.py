@@ -149,8 +149,10 @@ def parse_args():
     parser.add_argument("-g","--gamma", type=float, default=0.0)
     parser.add_argument("-c","--local_count", type=int, default=10)
     parser.add_argument("-n","--num_data", type=int, default=20)
+    parser.add_argument("-l","--local_opt", type=int, default=0)
+    parser.add_argument("-s","--slack_prop", type=float, default=0.05)
     args = parser.parse_args()
-    return args.gamma, args.fileheader, args.num_data, args.local_count
+    return args.gamma, args.fileheader, args.num_data, args.local_count, args.local_opt, args.slack_prop
 
 
 # for a given gamma, filename, num_data and count
@@ -329,10 +331,10 @@ def get_aswt_stopping_point_of_model(test_acc, gamma, count, num_data, local_max
             test_epoch += 1
     return stop_epoch, stop_acc
 
-def get_aswt_stopping_point(model, file_suffix, gamma, count, num_data):
+def get_aswt_stopping_point(model, file_suffix, gamma, count, num_data, local_maxima=0, slack_prop=0.05):
     filename = "losses/" + model + "/" + model + "_" + str(file_suffix) + ".txt"
     train_loss, train_acc, test_loss, test_acc = read_file(filename)
-    return get_aswt_stopping_point_of_model(test_acc, gamma, count, num_data)
+    return get_aswt_stopping_point_of_model(test_acc, gamma, count, num_data, local_maxima=local_maxima, slack_prop=slack_prop)
 
 # for a given curve, first find the standard stopping points/acc
 # then determine the earliest epoch where the acc is > standard_acc-acc_threshold
@@ -454,31 +456,32 @@ def denoise_test_acc(test_acc, local_maxima_range=1):
 ###
 
 if __name__ == "__main__":
-    model_names = ["alexnet", "fc1", "fc2", "googlenet", "lenet", "resnet34", "resnet50", "resnet101", "vgg11", "vgg16", "vgg19"]
-    gamma, fileheader, num_data, count = parse_args()
-    graph_file = open("optimized_hypers2.csv", "w")
-    graph_file.write("Model,Standard,AWST")
-    for model in model_names:
-        total_epochs_difference = 0
-        total_accuracy_difference = 0.0
-        avg_standard_epochs = 0
-        avg_new_epochs = 0
-        avg_standard_acc = 0.0
-        avg_new_acc = 0.0
-        for i in range(0,5):
-            filename="losses/" + model + "/" + model + "_" + str(i) + ".txt"
-            standard_epochs, new_epochs, best_epochs, standard_acc, new_acc, best_acc = early_stopping_analysis(gamma, filename, num_data, count)
-            total_epochs_difference += standard_epochs - new_epochs
-            total_accuracy_difference += standard_acc - new_acc
-            avg_standard_epochs += standard_epochs
-            avg_new_epochs += new_epochs
-            avg_standard_acc += standard_acc
-            avg_new_acc += new_acc
-        print("standard took ", total_epochs_difference/5, "more epochs for ", total_accuracy_difference/5, "better accuracy")
-        avg_standard_epochs = avg_standard_epochs / 5
-        avg_new_epochs = avg_new_epochs / 5
-        s1 = model + "," + str(avg_standard_epochs) + "," + str(avg_new_epochs) + "\n"
-        graph_file.write(s1)
-    graph_file.close()
+#    model_names = ["alexnet", "fc1", "fc2", "googlenet", "lenet", "resnet34", "resnet50", "resnet101", "vgg11", "vgg16", "vgg19"]
+    gamma, fileheader, num_data, count, local_optima, slack_prop = parse_args()
+    print(get_aswt_stopping_point(model="resnet101", file_suffix=0, gamma=gamma, num_data=num_data, count=count, local_maxima=local_optima, slack_prop=slack_prop))
+  #  graph_file = open("optimized_hypers2.csv", "w")
+   # graph_file.write("Model,Standard,AWST")
+   # for model in model_names:
+   #     total_epochs_difference = 0
+    #    total_accuracy_difference = 0.0
+     #   avg_standard_epochs = 0
+      #  avg_new_epochs = 0
+       # avg_standard_acc = 0.0
+       # avg_new_acc = 0.0
+       # for i in range(0,5):
+        #    filename="losses/" + model + "/" + model + "_" + str(i) + ".txt"
+         #   standard_epochs, new_epochs, best_epochs, standard_acc, new_acc, best_acc = early_stopping_analysis(gamma, filename, num_data, count)
+          #  total_epochs_difference += standard_epochs - new_epochs
+          #  total_accuracy_difference += standard_acc - new_acc
+          #  avg_standard_epochs += standard_epochs
+          #  avg_new_epochs += new_epochs
+          #  avg_standard_acc += standard_acc
+          #  avg_new_acc += new_acc
+      #  print("standard took ", total_epochs_difference/5, "more epochs for ", total_accuracy_difference/5, "better accuracy")
+      #  avg_standard_epochs = avg_standard_epochs / 5
+      #  avg_new_epochs = avg_new_epochs / 5
+      #  s1 = model + "," + str(avg_standard_epochs) + "," + str(avg_new_epochs) + "\n"
+      #  graph_file.write(s1)
+   # graph_file.close()
 # CSV FILE FORMAT
 # model, method, run#, epochs, accuracy, gamma, local_count, num_data
