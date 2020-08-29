@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
+import numpy as np
 
 import torchvision
 import torchvision.transforms as transforms
@@ -48,7 +49,7 @@ def train(epoch):
     return (reported_loss, train_acc)
 
 
-def test(epoch):
+def test(epoch, save_name):
     global best_acc
     net.eval()
     test_loss = 0
@@ -80,6 +81,7 @@ def test(epoch):
         }
         if not os.path.isdir('checkpoint'):
             os.mkdir('checkpoint')
+        save_file = "./checkpoint/" + save_name + "_ckpt.pth"
         torch.save(state, './checkpoint/lrsched2_ckpt.pth')
         best_acc = acc
     return (reported_loss, acc)
@@ -195,15 +197,17 @@ num_data = args.num_data
 local_maxima = args.local_max
 slack_prop = args.slack_prop
 aswt_start_epoch = max(num_data, count)
+save_name = str(args.model) + "_" + str(run_num)
 for epoch in range(start_epoch, start_epoch+400):
     train_loss, train_acc = train(epoch)
-    test_loss, test_acc = test(epoch)
+    test_loss, test_acc = test(epoch, save_name)
     test_acc_history.append(test_acc/100)
     print(test_acc_history)
     # perform ASWT to reduce LR
     if aswt_force_val == 0 and epoch > aswt_start_epoch:
         # aswt test
-        aswt_stop = analysis.aswt_stopping(test_acc_history, gamma=gamma, count=count, num_data=num_data, local_maxima=local_maxima, slack_prop=slack_prop)
+        aswt_stop = analysis.aswt_stopping(np.array(test_acc_history), gamma=gamma, count=count, num_data=num_data, local_maxima=local_maxima, slack_prop=slack_prop)
+        print("ASWT", aswt_stop)
         if aswt_stop:
             curr_lr = curr_lr * 0.1
             for g in optimizer.param_groups:
@@ -212,6 +216,7 @@ for epoch in range(start_epoch, start_epoch+400):
             print("LR is now", curr_lr)
     else:
         aswt_force_val -= 1
+        aswt_force_val = max(0, aswt_force_val)
     log_line = str(epoch) + "," + str(train_loss) + "," + str(train_acc) + "," + str(test_loss) + "," + str(test_acc) + "\n"
     log_file.write(log_line) 
 
