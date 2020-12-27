@@ -235,7 +235,7 @@ for epoch in range(start_epoch, start_epoch+400):
     #     aswt_force_val -= 1
     #     aswt_force_val = max(0, aswt_force_val)
     if scheduler is not None:
-        if args.scheduler == "reduce":
+        if args.schedule == "reduce":
             scheduler.step(test_loss)
         else:
             scheduler.step()
