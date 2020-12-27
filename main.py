@@ -195,7 +195,7 @@ if args.schedule == "step":
 elif args.schedule == "exponential":
     scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
     print("Using ExponentialLR Scheduler")
-elif args.schedule == "reducelr":
+elif args.schedule == "reduce":
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.1, patience=10)
     print("Using ReduceLRPlateau Scheduler")
 log_name = "losses/" + args.model + "_" + str(run_num) + ".txt" 
@@ -235,7 +235,10 @@ for epoch in range(start_epoch, start_epoch+400):
     #     aswt_force_val -= 1
     #     aswt_force_val = max(0, aswt_force_val)
     if scheduler is not None:
-        scheduler.step()
+        if args.scheduler == "reduce":
+            scheduler.step(test_loss)
+        else:
+            scheduler.step()
     log_line = str(epoch) + "," + str(train_loss) + "," + str(train_acc) + "," + str(test_loss) + "," + str(test_acc) + "\n"
     log_file.write(log_line) 
 
