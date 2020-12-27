@@ -7,6 +7,7 @@ import os
 import sys
 import time
 import math
+import numpy as np
 
 import torch.nn as nn
 import torch.nn.init as init
@@ -25,6 +26,16 @@ def get_mean_and_std(dataset):
     mean.div_(len(dataset))
     std.div_(len(dataset))
     return mean, std
+
+def get_max_acc(dataset):
+    fh = open(dataset, "r")
+    test_acc = []
+    for line in fh:
+        test_acc.append(float(line.split(",")[4].rstrip()))
+    test_acc = np.array(test_acc)
+    max_epoch = np.argmax(test_acc)
+    max_acc = test_acc[max_epoch]
+    return max_epoch, max_acc
 
 def init_params(net):
     '''Init layer parameters.'''
@@ -121,3 +132,22 @@ def format_time(seconds):
     if f == '':
         f = '0ms'
     return f
+
+
+print("\tfc1", get_max_acc("losses/fc1_5.txt"))
+for i in range(5):
+    print("StandardGoogleNet", get_max_acc(str("losses/GoogLeNet/GoogLeNet_" + str(i) + ".txt")))
+print("\tgooglenet5", get_max_acc("losses/GoogLeNet_5.txt"))
+print("\tgooglenet6", get_max_acc("losses/GoogLeNet_6.txt"))
+for i in range(5):
+    print("StandardResNet34", get_max_acc(str("losses/resnet34/resnet34_" + str(i) + ".txt")))
+print("\tresnet340", get_max_acc("losses/resnet34_0.txt"))
+print("\tresnet345", get_max_acc("losses/resnet34_5.txt"))
+for i in range(5):
+    print("StandardResNet101", get_max_acc(str("losses/resnet101/resnet101_" + str(i) + ".txt")))
+print("\tresnet1010", get_max_acc("losses/resnet101_0.txt"))
+print("\tresnet1015", get_max_acc("losses/resnet101_5.txt"))
+print("\tresnet1016", get_max_acc("losses/resnet101_6.txt"))
+for i in range(5):
+    print("StandardVgg19", get_max_acc(str("losses/vgg19/vgg19_" + str(i) + ".txt")))
+print("\tvgg195", get_max_acc("losses/vgg19_5.txt"))

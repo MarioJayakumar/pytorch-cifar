@@ -98,6 +98,7 @@ parser.add_argument("--count", default=5, type=int)
 parser.add_argument("--num_data", default=18, type=int)
 parser.add_argument("--slack_prop", default=0.05, type=float)
 parser.add_argument("--local_max", default=0, type=int)
+parser.add_argument("--schedule", default="step", type=str)
 args = parser.parse_args()
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -177,10 +178,26 @@ if args.resume:
     best_acc = checkpoint['acc']
     start_epoch = checkpoint['epoch']
 
+###
+# LR Schedulers for baseline
+# StepLR - multiply LR by 0.1 every 50 epochs
+# ExponentialLR - multiply LR by 0.9 every epoch
+# ReduceLROnPlateau - defaults, using validation loss
+###
+
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=args.lr,
                     momentum=0, weight_decay=0)
-
+scheduler = None
+if args.schedule == "step":
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
+    print("Using StepLR Scheduler")
+elif args.schedule == "exponential":
+    scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+    print("Using ExponentialLR Scheduler")
+elif args.schedule == "reducelr":
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.1, patience=10)
+    print("Using ReduceLRPlateau Scheduler")
 log_name = "losses/" + args.model + "_" + str(run_num) + ".txt" 
 
 log_file = open(log_name, "w")
@@ -204,19 +221,21 @@ for epoch in range(start_epoch, start_epoch+400):
     test_acc_history.append(test_acc/100)
     print(test_acc_history)
     # perform ASWT to reduce LR
-    if aswt_force_val == 0 and epoch > aswt_start_epoch:
-        # aswt test
-        aswt_stop = analysis.aswt_stopping(np.array(test_acc_history), gamma=gamma, count=count, num_data=num_data, local_maxima=local_maxima, slack_prop=slack_prop)
-        print("ASWT", aswt_stop)
-        if aswt_stop:
-            curr_lr = curr_lr * 0.1
-            for g in optimizer.param_groups:
-                g["lr"] = curr_lr
-            aswt_force_val = 5
-            print("LR is now", curr_lr)
-    else:
-        aswt_force_val -= 1
-        aswt_force_val = max(0, aswt_force_val)
+    # if aswt_force_val == 0 and epoch > aswt_start_epoch:
+    #     # aswt test
+    #     aswt_stop = analysis.aswt_stopping(np.array(test_acc_history), gamma=gamma, count=count, num_data=num_data, local_maxima=local_maxima, slack_prop=slack_prop)
+    #     print("ASWT", aswt_stop)
+    #     if aswt_stop:
+    #         curr_lr = curr_lr * 0.1
+    #         for g in optimizer.param_groups:
+    #             g["lr"] = curr_lr
+    #         aswt_force_val = 5
+    #         print("LR is now", curr_lr)
+    # else:
+    #     aswt_force_val -= 1
+    #     aswt_force_val = max(0, aswt_force_val)
+    if scheduler is not None:
+        scheduler.step()
     log_line = str(epoch) + "," + str(train_loss) + "," + str(train_acc) + "," + str(test_loss) + "," + str(test_acc) + "\n"
     log_file.write(log_line) 
 
