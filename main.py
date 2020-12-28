@@ -98,7 +98,8 @@ parser.add_argument("--count", default=5, type=int)
 parser.add_argument("--num_data", default=18, type=int)
 parser.add_argument("--slack_prop", default=0.05, type=float)
 parser.add_argument("--local_max", default=0, type=int)
-parser.add_argument("--schedule", default="step", type=str)
+parser.add_argument("--schedule", default="none", type=str)
+parser.add_argument("--optim", default="sgd", type=str)
 args = parser.parse_args()
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -188,6 +189,9 @@ if args.resume:
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=args.lr,
                     momentum=0, weight_decay=0)
+if args.optim == "adam":
+    optimizer = optim.Adam(net.parameters(), lr=args.lr)
+    print("Using Adam Optimizer")
 scheduler = None
 if args.schedule == "step":
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
@@ -198,6 +202,9 @@ elif args.schedule == "exponential":
 elif args.schedule == "reduce":
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.1, patience=10)
     print("Using ReduceLRPlateau Scheduler")
+else:
+    scheduler = None
+    print("No Scheduler Used")
 log_name = "losses/" + args.model + "_" + str(run_num) + ".txt" 
 
 log_file = open(log_name, "w")
@@ -243,3 +250,16 @@ for epoch in range(start_epoch, start_epoch+400):
     log_file.write(log_line) 
 
 log_file.close()
+
+###
+# Resnet Trials (GPU1)
+# resnet101 - steplr => resnet101_7.txt
+# resnet101 - exponentiallr -> resnet101_8.txt
+# resnet101 - reduced -> resnet101_9.txt
+# resnet101 - Adam -> resnet101_10.txt
+# GoogLeNet Trials (GPU0)
+# GoogLeNet - steplr => GoogLeNet_7.txt
+# GoogLeNet - exponentiallr -> GoogLeNet_8.txt
+# GoogLeNet - reduced -> GoogLeNet_9.txt
+# GoogLeNet - Adam -> GoogLeNet_10.txt
+###
