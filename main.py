@@ -194,13 +194,13 @@ if args.optim == "adam":
     print("Using Adam Optimizer")
 scheduler = None
 if args.schedule == "step":
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
     print("Using StepLR Scheduler")
 elif args.schedule == "exponential":
-    scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+    scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.95)
     print("Using ExponentialLR Scheduler")
 elif args.schedule == "reduce":
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.1, patience=10)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.1, patience=20)
     print("Using ReduceLRPlateau Scheduler")
 else:
     scheduler = None
