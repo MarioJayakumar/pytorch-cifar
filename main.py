@@ -202,6 +202,12 @@ elif args.schedule == "exponential":
 elif args.schedule == "reduce":
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.1, patience=20)
     print("Using ReduceLRPlateau Scheduler")
+elif args.schedule == "cyclic1":
+    scheduler = optim.lr_scheduler.CyclicLR(optimizer, mode="triangular2", base_lr=0.01, max_lr=0.026, step_size_up=30000)
+    print("Using CyclicLR 1")
+elif args.schedule == "cyclic2":
+    scheduler = optim.lr_scheduler.CyclicLR(optimizer, mode="triangular", base_lr=0.1, max_lr=0.3)
+    print("Using CyclicLR 2")
 else:
     scheduler = None
     print("No Scheduler Used")
