@@ -234,20 +234,21 @@ for epoch in range(start_epoch, start_epoch+400):
     test_acc_history.append(test_acc/100)
     print(test_acc_history)
     # perform ASWT to reduce LR
-    # if aswt_force_val == 0 and epoch > aswt_start_epoch:
-    #     # aswt test
-    #     aswt_stop = analysis.aswt_stopping(np.array(test_acc_history), gamma=gamma, count=count, num_data=num_data, local_maxima=local_maxima, slack_prop=slack_prop)
-    #     print("ASWT", aswt_stop)
-    #     if aswt_stop:
-    #         curr_lr = curr_lr * 0.1
-    #         for g in optimizer.param_groups:
-    #             g["lr"] = curr_lr
-    #         aswt_force_val = 5
-    #         print("LR is now", curr_lr)
-    # else:
-    #     aswt_force_val -= 1
-    #     aswt_force_val = max(0, aswt_force_val)
-    if scheduler is not None:
+    if args.schedule=="ASWT":
+        if aswt_force_val == 0 and epoch > aswt_start_epoch:
+            # aswt test
+            aswt_stop = analysis.aswt_stopping(np.array(test_acc_history), gamma=gamma, count=20, num_data=num_data, local_maxima=0, slack_prop=slack_prop)
+            print("ASWT", aswt_stop)
+            if aswt_stop:
+                curr_lr = curr_lr * 0.1
+                for g in optimizer.param_groups:
+                    g["lr"] = curr_lr
+                aswt_force_val = 5
+                print("LR is now", curr_lr)
+        else:
+            aswt_force_val -= 1
+            aswt_force_val = max(0, aswt_force_val)
+    elif scheduler is not None:
         if args.schedule == "reduce":
             scheduler.step(test_loss)
         else:
