@@ -1,0 +1,12 @@
+Jan 28th
+    GCP VMs
+        train_googlenet_step -> T4_0
+        train_googlenet_reduce -> T4_1
+        train_googlenet_cyclic.sh -> T4_2
+        train_resnet_cyclic.sh -> T4_3
+    Dream
+        train_gpu0_dream.sh -> GPU0
+        train_gpu1_dream.sh -> GPU1
+    Prophet
+        train_gpu0_prophet.sh -> GPU0
+        train_gpu1_prophet.sh -> GPU1
